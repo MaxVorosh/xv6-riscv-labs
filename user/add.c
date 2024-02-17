@@ -16,7 +16,7 @@ main(int argc, char *argv[])
         }
         if (*second_number_ptr == '\n' || *second_number_ptr == '\0') {
             // Only one number
-            printf("Only one number given\n");
+            write(2, "Only one number given\n", 22);
             exit(1);
         }
         if ('0' <= *second_number_ptr && *second_number_ptr <= '9') {
@@ -24,13 +24,13 @@ main(int argc, char *argv[])
         }
         else {
             // Bad symbol
-            printf("Not a number\n");
+            write(2, "Not a number\n", 13);
             exit(3);
         }
     }
     second_number_ptr++;
     if (second_number_ptr >= end_buf) {
-        printf("Buffer overflow\n");
+        write(2, "Buffer overflow\n", 16);
         exit(2);
     }
     int num1 = atoi(buf);
