@@ -29,6 +29,18 @@ main(int argc, char *argv[])
         }
     }
     second_number_ptr++;
+    for (char* check_ptr = second_number_ptr; check_ptr != end_buf; ++check_ptr) {
+        if (*check_ptr == '\0' || *check_ptr == '\n') {
+            break;
+        }
+        if ('0' <= *check_ptr && *check_ptr <= '9') {
+            check_ptr++;
+        }
+        else {
+            write(2, "Not a number\n", 13);
+            exit(3);
+        }
+    }
     if (second_number_ptr >= end_buf) {
         write(2, "Buffer overflow\n", 16);
         exit(2);
