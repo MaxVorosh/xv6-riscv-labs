@@ -47,7 +47,6 @@ main(int argc, char *argv[])
     }
     int num1 = atoi(buf);
     int num2 = atoi(second_number_ptr);
-    int sum = num1 + num2;
-    printf("%d\n", sum);
+    add(num1, num2);
     exit(0);
 }
