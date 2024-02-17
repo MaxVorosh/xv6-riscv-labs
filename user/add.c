@@ -8,6 +8,10 @@ main(int argc, char *argv[])
     const int buf_size = 23;
     char buf[buf_size];
     gets(buf, buf_size);
+    if (buf[0] == ' ' || buf[0] == '\n' || buf[0] == '\0') {
+        write(2, "Empty input\n", 12);
+        exit(5);
+    }
     char* end_buf = buf + buf_size - 1;
     char* second_number_ptr = buf;
     while (second_number_ptr != end_buf) {
