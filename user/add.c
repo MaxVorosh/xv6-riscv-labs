@@ -5,7 +5,7 @@
 int
 main(int argc, char *argv[])
 {
-    const int buf_size = 20;
+    const int buf_size = 23;
     char buf[buf_size];
     gets(buf, buf_size);
     char* end_buf = buf + buf_size - 1;
