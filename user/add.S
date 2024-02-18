@@ -26,44 +26,67 @@ main:
 
     la t0, input
     li t1, BUF_SIZE
+    addi t1, t1, -1
     li t2, '\n'
     lbu t3, 0(t0)
     beq t3, t2, empty_fail
     li t2, ' '
     beq t3, t2, empty_fail
-    li t2, '\0'
+    li t2, 0
+    beq t3, t2, empty_fail
+    li t2, '\r'
     beq t3, t2, empty_fail
 
 find_space:
     lbu t3, 0(t0)
-    li t2, '\0'
-    beq t3, t2, one_numb_fail
-    li t2, '\n'
-    beq t3, t2, one_numb_fail
     li t2, ' '
     beq t3, t2, process_second
+
+    beq zero, t1, buf_over_fail
+    
+    li t2, 0
+    beq t3, t2, one_numb_fail
+    
+    li t2, '\n'
+    beq t3, t2, one_numb_fail
+
+    li t2, '\r'
+    beq t3, t2, one_numb_fail
+    
     li t2, '0'
     blt t3, t2, not_numb_fail
+    
     li t2, '9'
     bge t3, t2, not_numb_fail
+    
     addi t0, t0, 1
     addi t1, t1, -1
-    beq zero, t1, buf_over_fail
     j find_space
 
 process_second:
     addi t0, t0, 1
     addi t1, t1, -1
     mv t4, t0
+    lbu t3, 0(t4)
+    li t2, 0
+    beq t3, t2, one_numb_fail
+    li t2, '\n'
+    beq t3, t2, one_numb_fail
+    li t2, ' '
+    beq t3, t2, one_numb_fail
+    li t2, '\r'
+    beq t3, t2, one_numb_fail
 
 check_second:
     beq zero, t1, buf_over_fail
     lbu t3, 0(t4)
-    li t2, '\0'
+    li t2, 0
     beq t3, t2, do_sum
     li t2, '\n'
     beq t3, t2, do_sum
     li t2, ' '
+    beq t3, t2, do_sum
+    li t2, '\r'
     beq t3, t2, do_sum
     li t2, '0'
     blt t3, t2, not_numb_fail
