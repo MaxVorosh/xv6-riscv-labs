@@ -8,7 +8,7 @@ main(int argc, char *argv[])
     const int buf_size = 23;
     char buf[buf_size];
     gets(buf, buf_size);
-    if (buf[0] == ' ' || buf[0] == '\n' || buf[0] == '\0') {
+    if (buf[0] == ' ' || buf[0] == '\n' || buf[0] == '\0' || buf[0] == '\r') {
         write(2, "Empty input\n", 12);
         exit(5);
     }
@@ -18,7 +18,7 @@ main(int argc, char *argv[])
         if (*second_number_ptr == ' ') {
             break;
         }
-        if (*second_number_ptr == '\n' || *second_number_ptr == '\0') {
+        if (*second_number_ptr == '\n' || *second_number_ptr == '\0' || *second_number_ptr == '\r') {
             // Only one number
             write(2, "Only one number given\n", 22);
             exit(1);
@@ -33,8 +33,9 @@ main(int argc, char *argv[])
         }
     }
     second_number_ptr++;
-    for (char* check_ptr = second_number_ptr; check_ptr != end_buf; ++check_ptr) {
-        if (*check_ptr == '\0' || *check_ptr == '\n') {
+    char* check_ptr = second_number_ptr;
+    while (check_ptr < end_buf) {
+        if (*check_ptr == '\0' || *check_ptr == '\n' || *check_ptr == '\r') {
             break;
         }
         if ('0' <= *check_ptr && *check_ptr <= '9') {
@@ -45,7 +46,7 @@ main(int argc, char *argv[])
             exit(3);
         }
     }
-    if (second_number_ptr >= end_buf) {
+    if (check_ptr >= end_buf) {
         write(2, "Buffer overflow\n", 16);
         exit(2);
     }
