@@ -18,7 +18,7 @@ int read_number(char* buf, int buf_size, int is_last) {
         if (res == 0 || buf[i] == ' ') {
             break;
         }
-        if (buf[i] == '\n' || buf[i] == '\0') {
+        if (buf[i] == '\n' || buf[i] == '\0' || buf[i] == '\r') {
             if (is_last == 1) {
                 break;
             }
