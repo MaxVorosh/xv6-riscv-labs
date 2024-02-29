@@ -11,7 +11,7 @@ main(int argc, char** argv) {
         exit(2);
     }
     if (pid == 0) {
-        sleep(10);
+        sleep(100);
         exit(1);
     }
     printf("Parent id: %d, Child id: %d\n", getpid(), pid);
