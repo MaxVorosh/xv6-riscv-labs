@@ -17,10 +17,16 @@ main(int argc, char** argv) {
     if (pid == 0) {
         close(p[1]);
         char buf[buf_size];
-        while (read(p[0], buf, buf_size) > 0) {
+        int n;
+        while ((n = read(p[0], buf, buf_size)) > 0) {
             printf("%s", buf);
         }
         close(p[0]);
+        if (n < 0) {
+            const int msg_len = 14;
+            write(2, "Reading error\n", msg_len);
+            exit(4);
+        }
         exit(0);
     }
     close(p[0]);
