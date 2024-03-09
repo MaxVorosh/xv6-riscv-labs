@@ -9,6 +9,7 @@ main(int argc, char** argv) {
     if (pipe(p) < 0) {
         const int msg_len = 18;
         write(2, "Can't create pipe\n", msg_len);
+        exit(5);
     }
     const int buf_size = 21;
     int pid = fork();
