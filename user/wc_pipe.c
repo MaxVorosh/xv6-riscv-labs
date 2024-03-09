@@ -33,7 +33,13 @@ main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         int len = strlen(argv[i]);
         argv[i][len] = '\n';
-        write(p[1], argv[i], len + 1);
+        if (write(p[1], argv[i], len + 1) < 0) {
+            const int msg_len = 20;
+            write(2, "Can't write to pipe\n", msg_len);
+            close(p[1]);
+            wait(&status);
+            exit(6);
+        }
     }
     close(p[1]);
     wait(&status);
