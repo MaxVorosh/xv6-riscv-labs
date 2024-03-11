@@ -685,6 +685,14 @@ procdump(void)
 
 
 int ps_listinfo(procinfo_t* plist, int lim) {
+  enum proc_info_state states[] = {
+  [UNUSED]    IUNUSED,
+  [USED]      IUSED,
+  [SLEEPING]  ISLEEPING,
+  [RUNNABLE]  IRUNNABLE,
+  [RUNNING]   IRUNNING,
+  [ZOMBIE]    IZOMBIE
+  };
   int cnt = 0;
   for (struct proc* p = proc; p < &proc[NPROC]; p++) {
     acquire(&(p->lock));
@@ -698,9 +706,17 @@ int ps_listinfo(procinfo_t* plist, int lim) {
       if (plist != 0) {
         procinfo_t* to = plist + (cnt - 1);
         procinfo_t cur;
-        cur.state = state;
+        cur.state = states[state];
         acquire(&wait_lock);
-        cur.parent_id = p->parent->pid;
+        struct proc* parent = p->parent;
+        if (parent == 0) {
+          cur.parent_id = -1;
+        }
+        else {
+          acquire(&(parent->lock));
+          cur.parent_id = parent->pid;
+          release(&(parent->lock));
+        }
         release(&wait_lock);
         memmove(cur.name, p->name, 16);
         if (copyout(myproc()->pagetable, (uint64)to, (char*)&cur, sizeof(procinfo_t)) < 0) {
@@ -715,9 +731,9 @@ int ps_listinfo(procinfo_t* plist, int lim) {
 }
 
 int sys_pcinfo(void) {
-  procinfo_t* plist;
+  uint64 plist;
   int lim;
-  argaddr(0, (uint64*)&plist);
+  argaddr(0, &plist);
   argint(1, &lim);
-  return ps_listinfo(plist, lim);
+  return ps_listinfo((procinfo_t*)plist, lim);
 }
