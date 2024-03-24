@@ -9,3 +9,5 @@ typedef struct mutex {
     struct sleeplock lock;
     int times;
 } mutex_t;
+
+int removemutex(int mutex_desc);

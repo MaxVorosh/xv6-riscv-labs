@@ -312,6 +312,18 @@ fork(void)
 
   pid = np->pid;
 
+  for (int i = 0; i < PROCMUTEX; ++i) {
+    np->mutexes[i] = p->mutexes[i];
+    if (p->mutexes[i] == 0) {
+      continue;
+    }
+    acquire(&p->mutexes[i]->access_lock);
+    if (holdingsleep(&p->mutexes[i]->lock)) {
+      p->mutexes[i]->times++;
+    }
+    release(&p->mutexes[i]->access_lock);
+  }
+
   release(&np->lock);
 
   acquire(&wait_lock);
@@ -357,6 +369,13 @@ exit(int status)
       struct file *f = p->ofile[fd];
       fileclose(f);
       p->ofile[fd] = 0;
+    }
+  }
+
+  // Close mutexes
+  for (int i = 0; i < PROCMUTEX; ++i) {
+    if (p->mutexes[i] != 0) {
+      removemutex(i);
     }
   }
 
