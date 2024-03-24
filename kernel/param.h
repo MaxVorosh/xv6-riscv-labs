@@ -12,3 +12,4 @@
 #define FSSIZE       2000  // size of file system in blocks
 #define MAXPATH      128   // maximum file path name
 #define NMUTEX       128   // maximum number of mutexes
+#define PROCMUTEX    16    // maximum number of mutex per process

@@ -2,7 +2,7 @@
 #include "param.h"
 #include "memlayout.h"
 #include "riscv.h"
-#include "mutex.h"
+#include "proc.h"
 #include "defs.h"
 
 mutex_t mutex_table[NMUTEX];
@@ -15,25 +15,47 @@ void mutexesinit() {
     }
 }
 
+int add_mutex_to_process(mutex_t* m, struct proc* p) {
+    acquire(&p->lock);
+    for (int i = 0; i < PROCMUTEX; ++i) {
+        if (p->mutexes[i] == 0) {
+            p->mutexes[i] = m;
+            release(&p->lock);
+            return i;
+        }
+    }
+    release(&p->lock);
+    return -1;
+}
+
 int createmutex() {
+    struct proc* p = myproc();
     for (mutex_t* m = mutex_table; m < &mutex_table[NMUTEX]; ++m) {
         acquire(&m->access_lock);
         if (m->times == 0) {
             m->times = 1;
+            int descriptor = add_mutex_to_process(m, p);
             release(&m->access_lock);
-            return m - mutex_table;
+            return descriptor;
         }
         release(&m->access_lock);
     }
-    return -1;
+    return -2;
 }
 
 int lock(int mutex_desc) {
-    if (mutex_desc >= NMUTEX || mutex_desc < 0) {
+    if (mutex_desc >= PROCMUTEX || mutex_desc < 0) {
         // Wrong descriptor
         return -1;
     }
-    mutex_t* m = mutex_table + mutex_desc;
+    struct proc* p = myproc();
+    acquire(&p->lock);
+    mutex_t* m = p->mutexes[mutex_desc];
+    release(&p->lock);
+    if (m == 0) {
+        // Wrong descriptor
+        return -1;
+    }
     acquire(&m->access_lock);
     if (holdingsleep(&m->lock)) {
         // Already locked
@@ -52,7 +74,14 @@ int unlock(int mutex_desc) {
         // Wrong descriptor
         return -1;
     }
-    mutex_t* m = mutex_table + mutex_desc;
+    struct proc* p = myproc();
+    acquire(&p->lock);
+    mutex_t* m = p->mutexes[mutex_desc];
+    release(&p->lock);
+    if (m == 0) {
+        // Wrong descriptor
+        return -1;
+    }
     acquire(&m->access_lock);
     if (!holdingsleep(&m->lock)) {
         // Not locked
@@ -72,7 +101,15 @@ int removemutex(int mutex_desc) {
         // Wrong descriptor
         return -1;
     }
-    mutex_t* m = mutex_table + mutex_desc;
+    struct proc* p = myproc();
+    acquire(&p->lock);
+    mutex_t* m = p->mutexes[mutex_desc];
+    p->mutexes[mutex_desc] = 0;
+    release(&p->lock);
+    if (m == 0) {
+        // Wrong descriptor
+        return -1;
+    }
     acquire(&m->access_lock);
     if (holdingsleep(&m->lock)) {
         releasesleep(&m->lock);
