@@ -63,9 +63,9 @@ int lock(int mutex_desc) {
         release(&m->access_lock);
         return 0;
     } 
-    acquiresleep(&m->lock);
     m->times++;
     release(&m->access_lock);
+    acquiresleep(&m->lock);
     return 0;
 }
 
@@ -89,10 +89,8 @@ int unlock(int mutex_desc) {
         return -2;
     }
     m->times--;
-    if (m->times == 0) {
-        releasesleep(&m->lock);
-    }
     release(&m->access_lock);
+    releasesleep(&m->lock);
     return 0;
 }
 
@@ -111,11 +109,11 @@ int removemutex(int mutex_desc) {
         return -1;
     }
     acquire(&m->access_lock);
+    m->times--;
+    release(&m->access_lock);
     if (holdingsleep(&m->lock)) {
         releasesleep(&m->lock);
     }
-    m->times--;
-    release(&m->access_lock);
     return 0;
 }
 
