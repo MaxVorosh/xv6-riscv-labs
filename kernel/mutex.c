@@ -12,6 +12,7 @@ void mutexesinit() {
         initlock(&m->access_lock, "safety lock");
         initsleeplock(&m->lock, "working lock");
         m->times = 0;
+        m->pid = -1;
     }
 }
 
@@ -51,21 +52,20 @@ int lock(int mutex_desc) {
     struct proc* p = myproc();
     acquire(&p->lock);
     mutex_t* m = p->mutexes[mutex_desc];
+    int pid = p->pid;
     release(&p->lock);
     if (m == 0) {
         // Wrong descriptor
         return -1;
     }
-    acquire(&m->access_lock);
     if (holdingsleep(&m->lock)) {
         // Already locked
-        m->times++;
-        release(&m->access_lock);
-        return 0;
-    } 
-    m->times++;
-    release(&m->access_lock);
+        return -2;
+    }
     acquiresleep(&m->lock);
+    acquire(&m->access_lock); 
+    m->pid = pid;
+    release(&m->access_lock);
     return 0;
 }
 
@@ -77,18 +77,23 @@ int unlock(int mutex_desc) {
     struct proc* p = myproc();
     acquire(&p->lock);
     mutex_t* m = p->mutexes[mutex_desc];
+    int pid = p->pid;
     release(&p->lock);
     if (m == 0) {
         // Wrong descriptor
         return -1;
     }
-    acquire(&m->access_lock);
     if (!holdingsleep(&m->lock)) {
         // Not locked
-        release(&m->access_lock);
         return -2;
     }
-    m->times--;
+    acquire(&m->access_lock);
+    if (m->pid != pid) {
+        // Wrong process
+        release(&m->access_lock);
+        return -3;
+    }
+    m->pid = -1;
     release(&m->access_lock);
     releasesleep(&m->lock);
     return 0;
@@ -102,12 +107,14 @@ int removemutex(int mutex_desc) {
     struct proc* p = myproc();
     acquire(&p->lock);
     mutex_t* m = p->mutexes[mutex_desc];
-    p->mutexes[mutex_desc] = 0;
     release(&p->lock);
     if (m == 0) {
         // Wrong descriptor
         return -1;
     }
+    acquire(&p->lock);
+    p->mutexes[mutex_desc] = 0;
+    release(&p->lock);
     acquire(&m->access_lock);
     m->times--;
     release(&m->access_lock);

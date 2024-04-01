@@ -318,9 +318,7 @@ fork(void)
       continue;
     }
     acquire(&p->mutexes[i]->access_lock);
-    if (holdingsleep(&p->mutexes[i]->lock)) {
-      p->mutexes[i]->times++;
-    }
+    p->mutexes[i]->times++;
     release(&p->mutexes[i]->access_lock);
   }
 
