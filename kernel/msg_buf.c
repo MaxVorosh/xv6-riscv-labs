@@ -13,8 +13,8 @@ void init_msg_buf() {
 }
 
 void put_byte(char byte) {
-    msg_buf.buf[msg_buf.tail] = byte;
     int size = PGSIZE * BUFCNT;
+    msg_buf.buf[msg_buf.tail % size] = byte;
     if (msg_buf.tail - msg_buf.head == size) {
         msg_buf.head++;
         msg_buf.head %= size;
@@ -121,14 +121,21 @@ int pr_msg(const char* fmt, ...) {
 int sys_dmesg(void) {
     uint64 buf;
     argaddr(0, &buf);
-    acquire(&msg_buf.lock);
     int status = 0;
     int size = BUFCNT * PGSIZE;
-    char linear_buf[size];
-    for (int i = msg_buf.head; i < msg_buf.tail; ++i) {
-        linear_buf[i] = msg_buf.buf[i % size];
+    acquire(&msg_buf.lock);
+    if (msg_buf.tail < size) {
+        if (copyout(myproc()->pagetable, buf, &msg_buf.buf[msg_buf.head], msg_buf.tail - msg_buf.head) < 0) {
+            status = -1;
+        }
+        release(&msg_buf.lock);
+        return status;    
     }
-    if (copyout(myproc()->pagetable, buf, linear_buf, size) < 0) {
+    if (copyout(myproc()->pagetable, buf, &msg_buf.buf[msg_buf.head], size - msg_buf.head) < 0) {
+        release(&msg_buf.lock);
+        return -1;
+    }
+    if (copyout(myproc()->pagetable, buf + size -  msg_buf.head, &msg_buf.buf[0], msg_buf.tail - size) < 0) {
         status = -1;
     }
     release(&msg_buf.lock);

@@ -11,3 +11,4 @@ typedef struct MessageBuffer {
 } MessageBuffer_t;
 
 void init_msg_buf();
+int pr_msg(const char* fmt, ...);
