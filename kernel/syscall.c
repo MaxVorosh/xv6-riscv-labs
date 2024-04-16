@@ -1,8 +1,7 @@
+#include "msg_buf.h"
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
-#include "riscv.h"
-#include "spinlock.h"
 #include "proc.h"
 #include "syscall.h"
 #include "defs.h"
@@ -102,6 +101,7 @@ extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_dmesg(void);
+extern uint64 sys_chlog(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -128,6 +128,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_dmesg]   sys_dmesg,
+[SYS_chlog]   sys_chlog,
 };
 
 void
@@ -141,6 +142,13 @@ syscall(void)
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
     p->trapframe->a0 = syscalls[num]();
+
+    char* names[] = {"fork", "exit", "wait", "pipe", "read", "kill", "exec", "fstat", "chdir", "dup", "getpid", "sbrk", "sleep", "uptime", "open", "write", 
+      "mknod", "unlink", "link", "mkdir", "close", "dmesg", "chlog"};
+    acquire(&p->lock);
+    pr_msg(SYSCALL, "Syscall in id = %d, name = %s. Called number = %d, name = %s", p->pid, p->name, num, names[num]);
+    release(&p->lock);
+
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);

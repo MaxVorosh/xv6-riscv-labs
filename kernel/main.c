@@ -40,6 +40,7 @@ main()
     trapinithart();   // install kernel trap vector
     plicinithart();   // ask PLIC for device interrupts
     init_msg_buf();   // init message buffer
+    init_mode_table(); // init modes table
   }
 
   scheduler();        

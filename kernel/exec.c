@@ -31,7 +31,7 @@ exec(char *path, char **argv)
   struct proc *p = myproc();
 
   acquire(&p->lock);
-  pr_msg("id = %d, name = %s", p->pid, path);
+  pr_msg(EXEC, "Exec name = %s in id = %d", path, p->pid);
   release(&p->lock);
 
   begin_op();

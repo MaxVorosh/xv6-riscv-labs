@@ -12,5 +12,6 @@ int main() {
         return 1;
     }
     printf("%s", buf);
+    free(buf);
     return 0;
 }

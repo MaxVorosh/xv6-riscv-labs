@@ -5,11 +5,19 @@
 #include <stdarg.h>
 
 MessageBuffer_t msg_buf;
+ModesTable_t modes_table;
 
 void init_msg_buf() {
     msg_buf.head = 0;
     msg_buf.tail = 0;
     initlock(&msg_buf.lock, "buf_lock");
+}
+
+void init_mode_table() {
+    initlock(&modes_table.lock, "modes_table_lock");
+    for (int i = 0; i < MODECNT; ++i) {
+        modes_table.modes_enabled[i] = 0;
+    }
 }
 
 void put_byte(char byte) {
@@ -57,13 +65,19 @@ void pr_msg_ptr(uint64 p) {
         put_byte(digits[p >> (sizeof(uint64) * 8 - 4)]);
 }
 
-int pr_msg(const char* fmt, ...) {
+int pr_msg(enum log_mode type, const char* fmt, ...) {
+    acquire(&modes_table.lock);
+    if (!modes_table.modes_enabled[(int)type]) {
+        release(&modes_table.lock);
+        return -2;
+    }
+    release(&modes_table.lock);
     if (fmt == 0) {
         return -1;
     }
-    acquire(&tickslock);
+    // acquire(&tickslock);
     int cur_ticks = ticks;
-    release(&tickslock);
+    // release(&tickslock);
 
     char* s;
     va_list ap;
@@ -140,4 +154,20 @@ int sys_dmesg(void) {
     }
     release(&msg_buf.lock);
     return status;
+}
+
+int sys_chlog(void) {
+    int mode, value;
+    argint(0, &mode);
+    argint(0, &value);
+    if (value < 0 || value > 1) {
+        return -1;
+    }
+    if (mode < 0 || mode >= MODECNT) {
+        return -2;
+    }
+    acquire(&modes_table.lock);
+    modes_table.modes_enabled[mode] = value;
+    release(&modes_table.lock);
+    return 0;
 }
