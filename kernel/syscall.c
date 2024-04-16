@@ -102,6 +102,7 @@ extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_dmesg(void);
 extern uint64 sys_chlog(void);
+extern uint64 sys_chtime(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -129,6 +130,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_dmesg]   sys_dmesg,
 [SYS_chlog]   sys_chlog,
+[SYS_chtime]  sys_chtime,
 };
 
 void
@@ -144,9 +146,9 @@ syscall(void)
     p->trapframe->a0 = syscalls[num]();
 
     char* names[] = {"fork", "exit", "wait", "pipe", "read", "kill", "exec", "fstat", "chdir", "dup", "getpid", "sbrk", "sleep", "uptime", "open", "write", 
-      "mknod", "unlink", "link", "mkdir", "close", "dmesg", "chlog"};
+      "mknod", "unlink", "link", "mkdir", "close", "dmesg", "chlog", "chtime"};
     acquire(&p->lock);
-    pr_msg(SYSCALL, "Syscall in id = %d, name = %s. Called number = %d, name = %s", p->pid, p->name, num, names[num]);
+    pr_msg(SYSCALL, "Syscall in id = %d, name = %s. Called number = %d, name = %s", p->pid, p->name, num, names[num - 1]);
     release(&p->lock);
 
   } else {

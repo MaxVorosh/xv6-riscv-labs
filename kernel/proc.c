@@ -458,7 +458,7 @@ scheduler(void)
         // to release its lock and then reacquire it
         // before jumping back to us.
 
-        pr_msg(SWITCH, "Switched to id = %d, name = %s. Proc dump addr = %p, cpu context addr = %p", p->pid, p->name, p->trapframe, c->context);
+        pr_msg(SWITCH, "Switch to id = %d, name = %s. Dump addr = %p, Context addr = %p", p->pid, p->name, &p->trapframe, &c->context);
 
         p->state = RUNNING;
         c->proc = p;

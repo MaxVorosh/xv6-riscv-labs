@@ -15,6 +15,7 @@ void init_msg_buf() {
 
 void init_mode_table() {
     initlock(&modes_table.lock, "modes_table_lock");
+    modes_table.stop_ticks = -1;
     for (int i = 0; i < MODECNT; ++i) {
         modes_table.modes_enabled[i] = 0;
     }
@@ -58,7 +59,7 @@ void pr_msg_int(int xx, int base, int sign) {
 
 void pr_msg_ptr(uint64 p) {
     int i;
-    char* digits = "0123456789";
+    char* digits = "0123456789abcdef";
     put_byte('0');
     put_byte('x');
     for (i = 0; i < (sizeof(uint64) * 2); i++, p <<= 4)
@@ -66,18 +67,23 @@ void pr_msg_ptr(uint64 p) {
 }
 
 int pr_msg(enum log_mode type, const char* fmt, ...) {
-    acquire(&modes_table.lock);
-    if (!modes_table.modes_enabled[(int)type]) {
-        release(&modes_table.lock);
-        return -2;
-    }
-    release(&modes_table.lock);
     if (fmt == 0) {
         return -1;
     }
     // acquire(&tickslock);
     int cur_ticks = ticks;
     // release(&tickslock);
+
+    acquire(&modes_table.lock);
+    if (!modes_table.modes_enabled[(int)type]) {
+        release(&modes_table.lock);
+        return -2;
+    }
+    if (modes_table.stop_ticks < cur_ticks) {
+        release(&modes_table.lock);
+        return -3;
+    }
+    release(&modes_table.lock);
 
     char* s;
     va_list ap;
@@ -159,7 +165,7 @@ int sys_dmesg(void) {
 int sys_chlog(void) {
     int mode, value;
     argint(0, &mode);
-    argint(0, &value);
+    argint(1, &value);
     if (value < 0 || value > 1) {
         return -1;
     }
@@ -168,6 +174,16 @@ int sys_chlog(void) {
     }
     acquire(&modes_table.lock);
     modes_table.modes_enabled[mode] = value;
+    release(&modes_table.lock);
+    return 0;
+}
+
+int sys_chtime(void) {
+    int time;
+    argint(0, &time);
+    int cur_time = ticks;
+    acquire(&modes_table.lock);
+    modes_table.stop_ticks = cur_time + time;
     release(&modes_table.lock);
     return 0;
 }

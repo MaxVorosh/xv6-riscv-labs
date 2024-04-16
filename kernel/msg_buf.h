@@ -12,6 +12,7 @@ typedef struct MessageBuffer {
 
 typedef struct ModesTable {
     struct spinlock lock;
+    int stop_ticks;
     int modes_enabled[MODECNT];
 } ModesTable_t;
 

@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_dmesg  22
 #define SYS_chlog  23
+#define SYS_chtime 24
