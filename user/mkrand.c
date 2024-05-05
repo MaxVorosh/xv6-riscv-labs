@@ -3,7 +3,6 @@
 #include "user/user.h"
 #include "kernel/fcntl.h"
 
-#define seed 42
 #define MAXSIZE (11 + 256 + 256 * 256) * 1024 / sizeof(uint)
 
 uint gen_next(uint elem) {
@@ -12,8 +11,9 @@ uint gen_next(uint elem) {
 
 int main(int argc, char** argv) {
     char* filename = "big_file";
-    uint data = seed;
     int size = atoi(argv[1]); // number of bits
+    int seed = atoi(argv[2]);
+    uint data = seed;
     size /= sizeof(uint);
     if (size <= 0 || size > MAXSIZE) {
         fprintf(2, "Incorrect size\n");
