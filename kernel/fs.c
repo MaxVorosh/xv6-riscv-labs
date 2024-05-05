@@ -425,7 +425,7 @@ bmap(struct inode *ip, uint bn)
       if (addr == 0) {
         return 0;
       }
-      ip->addrs[NDIRECT] = addr;
+      ip->addrs[NDIRECT + 1] = addr;
     }
     struct buf* bp = bread(ip->dev, addr);
     a = (uint*)bp->data;
@@ -433,7 +433,7 @@ bmap(struct inode *ip, uint bn)
       addr = balloc(ip->dev);
       if (addr) {
         a[bbn] = addr;
-        //log_write(bp);
+        log_write(bp);
       }
     }
     brelse(bp);
@@ -446,7 +446,7 @@ bmap(struct inode *ip, uint bn)
       addr = balloc(ip->dev);
       if (addr) {
         a[sbn] = addr;
-        //log_write(sbp);
+        log_write(sbp);
       }
     }
     brelse(sbp);
