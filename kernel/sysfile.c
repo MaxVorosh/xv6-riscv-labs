@@ -328,6 +328,23 @@ sys_open(void)
       return -1;
     }
     ilock(ip);
+    if (!(omode & O_NOFOLLOW)) {
+      int cnt = 0;
+      while (ip->type == T_SYMLINK) {
+        char buf[MAXPATH];
+        readi(ip, 0, (uint64)buf, 0, ip->size);
+        iunlockput(ip);
+        if ((ip = namei(buf)) == 0) {
+          end_op();
+          return -1;
+        }
+        cnt++;
+        if (cnt > RECLIMIT) {
+          end_op();
+          return -1;
+        }
+      }
+    }
     if(ip->type == T_DIR && omode != O_RDONLY){
       iunlockput(ip);
       end_op();

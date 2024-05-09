@@ -2,6 +2,7 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 #include "kernel/fs.h"
+#include "kernel/fcntl.h"
 
 char*
 fmtname(char *path)
@@ -30,7 +31,7 @@ ls(char *path)
   struct dirent de;
   struct stat st;
 
-  if((fd = open(path, 0)) < 0){
+  if((fd = open(path, O_NOFOLLOW)) < 0){
     fprintf(2, "ls: cannot open %s\n", path);
     return;
   }
@@ -46,7 +47,9 @@ ls(char *path)
   case T_FILE:
     printf("%s %d %d %l\n", fmtname(path), st.type, st.ino, st.size);
     break;
-
+  case T_SYMLINK:
+    printf("%s %d %d %l\n", fmtname(path), st.type, st.ino, st.size);
+    break;
   case T_DIR:
     if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
       printf("ls: path too long\n");
@@ -60,7 +63,7 @@ ls(char *path)
         continue;
       memmove(p, de.name, DIRSIZ);
       p[DIRSIZ] = 0;
-      if(stat(buf, &st) < 0){
+      if(lstat(buf, &st) < 0){
         printf("ls: cannot stat %s\n", buf);
         continue;
       }
