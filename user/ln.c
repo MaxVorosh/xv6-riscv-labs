@@ -9,11 +9,11 @@ main(int argc, char *argv[])
     fprintf(2, "Usage: ln [-h/-s] old new\n");
     exit(1);
   }
-  if (!strcmp(argv[3], "-h")) {
+  if (!strcmp(argv[1], "-h")) {
     if(link(argv[2], argv[3]) < 0)
       fprintf(2, "link %s %s: failed\n", argv[2], argv[3]);
   }
-  else if (!strcmp(argv[3], "-s")) {
+  else if (!strcmp(argv[1], "-s")) {
     if (symlink(argv[2], argv[3]) < 0) 
       fprintf(2, "symlink %s %s: failed\n", argv[2], argv[3]);
   }

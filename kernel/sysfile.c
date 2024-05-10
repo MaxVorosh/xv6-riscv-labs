@@ -345,7 +345,7 @@ sys_open(void)
         }
       }
     }
-    if(ip->type == T_DIR && omode != O_RDONLY){
+    if(ip->type == T_DIR && !(omode == O_RDONLY || omode == O_NOFOLLOW)){
       iunlockput(ip);
       end_op();
       return -1;
