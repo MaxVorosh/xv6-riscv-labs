@@ -400,7 +400,8 @@ sys_symlink(void) {
     end_op();
     return -1;
   }
-  writei(ip, 0, (uint64)target, 0, strlen(target) - 1);
+  ip->type = T_SYMLINK;
+  writei(ip, 0, (uint64)target, 0, strlen(target));
   iunlockput(ip);
   end_op();
   return 0;
@@ -423,13 +424,7 @@ sys_readlink(void) {
     return -1;
   }
   ilock(ip);
-  struct file* f;
-  if((f = filealloc()) == 0){
-    iunlockput(ip);
-    end_op();
-    return -1;
-  }
-  fileread(f, (uint64)buf, ip->size);
+  readi(ip, 1, (uint64)buf, 0, ip->size);
   iunlock(ip);
   end_op();
   return 0;
