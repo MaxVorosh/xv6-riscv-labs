@@ -114,8 +114,25 @@ int main() {
         printf("%s Done\n", incorrect[i]);
     }
     printf("All tests passed\n");
-    char* argv[] = {0};
-    exec("../../../ls", argv);
-    fprintf(2, "exec fail\n");
-    exit(2);
+    char* catalogs[] = {"/", "/p2", "/p2/p1", "/p2/p1/lns", "/p2/p1/lns/n1", "/p2/p1/lns/n1/n2"};
+    char* lss[] = {"/ls", "../ls", "../../ls", "../../../ls", "../../../../ls", "../../../../../ls"};
+    for (int i = 0; i < 6; ++i) {
+        int pid = fork();
+        check_res(pid, "Fork failed\n");
+        if (pid == 0) {
+            printf("=============\n");
+            printf("%s\n", catalogs[i]);
+            printf("=============\n");
+            safe_chdir(catalogs[i]);
+            char* argv[] = {0};
+            exec(lss[i], argv);
+            fprintf(2, "exec fail\n");
+            exit(1);
+        }
+        else {
+            int status;
+            wait(&status);
+        }
+    }
+    exit(0);
 }
