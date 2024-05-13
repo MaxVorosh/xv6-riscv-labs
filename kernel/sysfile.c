@@ -301,6 +301,17 @@ create(char *path, short type, short major, short minor)
   return 0;
 }
 
+void cut(char* path) {
+  int ind = strlen(path);
+  while (ind >= 0 && path[ind] != '/') {
+    path[ind] = 0;
+    ind--;
+  }
+  if (ind != 0) {
+    path[ind] = 0;
+  }
+}
+
 uint64
 sys_open(void)
 {
@@ -327,12 +338,27 @@ sys_open(void)
       end_op();
       return -1;
     }
+    char ppath[MAXPATH];
+    memmove(ppath, path, strlen(path));
     ilock(ip);
     if (!(omode & O_NOFOLLOW)) {
       int cnt = 0;
       while (ip->type == T_SYMLINK) {
+        cut(ppath);
         char buf[MAXPATH];
         readi(ip, 0, (uint64)buf, 0, ip->size);
+        buf[ip->size] = 0;
+        if (buf[0] != '/') {
+          if (strlen(ppath) != 0) {
+            ppath[strlen(ppath)] = '/';
+          }
+          memmove(ppath + strlen(ppath), buf, ip->size);
+          memmove(buf, ppath, strlen(ppath));
+        }
+        else {
+          memmove(ppath, buf, ip->size);
+          ppath[ip->size] = 0;
+        }
         iunlockput(ip);
         if ((ip = namei(buf)) == 0) {
           end_op();
@@ -343,6 +369,7 @@ sys_open(void)
           end_op();
           return -1;
         }
+        ilock(ip);
       }
     }
     if(ip->type == T_DIR && !(omode == O_RDONLY || omode == O_NOFOLLOW)){
