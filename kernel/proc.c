@@ -720,3 +720,51 @@ int sys_vmprint(void) {
   vmprint(p->pagetable, 1);
   return 0;
 }
+
+int sys_accessed(void) {
+  struct proc* p = myproc();
+  uint64 addr;
+  uint64 len;
+  argaddr(0, &addr);
+  argaddr(1, &len);
+  int res = 0;
+  len -= len % (1L<<12);
+  len += (1L << 12);
+  for (int i = 0; i < len; i+=(1L<<12)) {
+    uint64 new_addr = addr + i;
+    new_addr >>= 12;
+    uint64 L0 = new_addr & ((1L << 9) - 1);
+    new_addr >>= 9;
+    uint64 L1 = new_addr & ((1L << 9) - 1);
+    new_addr >>= 9;
+    uint64 L2 = new_addr & ((1L << 9) - 1);
+    pagetable_t pt0 = p->pagetable;
+    pte_t pte0 = pt0[L2];
+    if (!(pte0 & PTE_V)) {
+      continue;
+    }
+    if (pte0 & PTE_A) {
+      res = 1;
+      pt0[L2] ^= PTE_A;
+    }
+    pagetable_t pt1 = (pagetable_t)PTE2PA(pte0);
+    pte_t pte1 = pt1[L1];
+    if (!(pte1 & PTE_V)) {
+      continue;
+    }
+    if (pte1 & PTE_A) {
+      res = 1;
+      pt1[L1] ^= PTE_A;
+    }
+    pagetable_t pt2 = (pagetable_t)PTE2PA(pte1);
+    pte_t pte2 = pt2[L0];
+    if (!(pte2 & PTE_V)) {
+      continue;
+    }
+    if (pte2 & PTE_A) {
+      res = 1;
+      pt2[L0] ^= PTE_A;
+    }
+  }
+  return res;
+}
