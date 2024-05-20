@@ -681,3 +681,91 @@ procdump(void)
     printf("\n");
   }
 }
+
+void print_flag(pte_t pte, uint64 flag, char* c) {
+  if (pte & flag) {
+    printf("%s", c);
+  }
+  else {
+    printf(".");
+  }
+}
+
+void vmprint(pagetable_t pt, int level) {
+    for (int i = 0; i < 512; ++i) {
+      pte_t pte = pt[i];
+      if (pte & PTE_V) {
+        for (int i = 0; i < level - 1; ++i) {
+          printf(".. ");
+        }
+        printf("..%d: %p ", i, pte);
+        print_flag(pte, PTE_A, "a");
+        print_flag(pte, PTE_U, "u");
+        print_flag(pte, PTE_X, "x");
+        print_flag(pte, PTE_W, "w");
+        print_flag(pte, PTE_R, "r");
+        print_flag(pte, PTE_V, "v");
+        printf("\n");
+      }
+      if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) == 0){
+        // this PTE points to a lower-level page table.
+        uint64 child = PTE2PA(pte);
+        vmprint((pagetable_t)child, level + 1);
+      }
+    }
+}
+
+int sys_vmprint(void) {
+  struct proc* p = myproc();
+  printf("page table %p\n", p->pagetable);
+  vmprint(p->pagetable, 1);
+  return 0;
+}
+
+int sys_accessed(void) {
+  struct proc* p = myproc();
+  uint64 addr;
+  uint64 len;
+  argaddr(0, &addr);
+  argaddr(1, &len);
+  int res = 0;
+  len -= len % PGSIZE;
+  len += PGSIZE;
+  for (int i = 0; i < len; i+=PGSIZE) {
+    uint64 new_addr = addr + i;
+    new_addr >>= 12;
+    uint64 L0 = new_addr & ((1L << 9) - 1);
+    new_addr >>= 9;
+    uint64 L1 = new_addr & ((1L << 9) - 1);
+    new_addr >>= 9;
+    uint64 L2 = new_addr & ((1L << 9) - 1);
+    pagetable_t pt0 = p->pagetable;
+    pte_t pte0 = pt0[L2];
+    if (!(pte0 & PTE_V)) {
+      continue;
+    }
+    if (pte0 & PTE_A) {
+      res = 1;
+      pt0[L2] ^= PTE_A;
+    }
+    pagetable_t pt1 = (pagetable_t)PTE2PA(pte0);
+    pte_t pte1 = pt1[L1];
+    if (!(pte1 & PTE_V)) {
+      continue;
+    }
+    if (pte1 & PTE_A) {
+      res = 1;
+      pt1[L1] ^= PTE_A;
+    }
+    pagetable_t pt2 = (pagetable_t)PTE2PA(pte1);
+    pte_t pte2 = pt2[L0];
+    if (!(pte2 & PTE_V)) {
+      continue;
+    }
+    if (pte2 & PTE_A) {
+      res = 1;
+      pt2[L0] ^= PTE_A;
+    }
+  }
+  return res;
+}
