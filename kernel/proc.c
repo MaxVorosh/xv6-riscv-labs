@@ -699,6 +699,7 @@ void vmprint(pagetable_t pt, int level) {
           printf(".. ");
         }
         printf("..%d: %p ", i, pte);
+        print_flag(pte, PTE_A, "a");
         print_flag(pte, PTE_U, "u");
         print_flag(pte, PTE_X, "x");
         print_flag(pte, PTE_W, "w");
@@ -728,9 +729,9 @@ int sys_accessed(void) {
   argaddr(0, &addr);
   argaddr(1, &len);
   int res = 0;
-  len -= len % (1L<<12);
-  len += (1L << 12);
-  for (int i = 0; i < len; i+=(1L<<12)) {
+  len -= len % PGSIZE;
+  len += PGSIZE;
+  for (int i = 0; i < len; i+=PGSIZE) {
     uint64 new_addr = addr + i;
     new_addr >>= 12;
     uint64 L0 = new_addr & ((1L << 9) - 1);
